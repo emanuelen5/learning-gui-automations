@@ -26,7 +26,6 @@ with Timer("MSS"):
 
 img_gray = cv2.cvtColor(cv2.cvtColor(img.copy(), cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
 
-
 with Timer("Read"):
     template = cv2.imread("close_button.png")
 
@@ -34,9 +33,6 @@ with Timer("Array"):
     img = np.asarray(img)
 
 print("Searching")
-# matches = find_template(img, template)
-# print(matches)
-# sys.exit(0)
 
 with Timer("Search"):
     detection = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
