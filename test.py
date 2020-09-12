@@ -7,7 +7,7 @@ ahk = AHK()
 print(f"Active window: {ahk.active_window}")
 print(f"Position: {ahk.active_window.rect}")
 print(f"Title: {ahk.active_window.title}")
-print(f"Windows: {ahk.window.find_windows}")
+print(f"Windows: {ahk.windows()}")
 # ahk.active_window.title = "Bashash"
 # time.sleep(0.5)
 # ahk.active_window.hide()
