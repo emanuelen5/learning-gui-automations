@@ -11,33 +11,24 @@ import mss
 from matplotlib import pyplot as plt
 from screeninfo import get_monitors
 
+print("Listing monitors")
 for m in get_monitors():
     print(str(m))
+monitor = get_monitors()[0]
+
+print(f"Using first monitor: {str(monitor)}")
 
 with Timer("MSS"):
     sct = mss.mss()
-    mon = dict(top=0, left=0, width=1920 * 2, height=1080, monitor=-1)
-    printscreen = np.asarray(sct.grab(mon))
+    mon = dict(top=monitor.y, left=monitor.x, width=monitor.width, height=monitor.height, monitor=1)
+    img = np.asarray(sct.grab(mon), dtype=np.uint8)
+    img = img[:,:,0:3]
 
-
-def find_template(img, template):
-    h, w, _ = img.shape
-    ht, wt, _ = template.shape
-    matches = []
-    for hi in range(h - ht + 1):
-        for wi in range(w - wt + 1):
-            import pdb;
-            pdb.set_trace()
-            if (img[hi:hi + ht, wi:wi + wt] == template).all():
-                matches.append((hi, wi))
-    return matches
+img_gray = cv2.cvtColor(cv2.cvtColor(img.copy(), cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
 
 
 with Timer("Read"):
     template = cv2.imread("close_button.png")
-
-with Timer("Grab"):
-    img = ps.grab()
 
 with Timer("Array"):
     img = np.asarray(img)
@@ -72,11 +63,25 @@ ax1: plt.Axes
 ax1.hist(detection.ravel(), 512, (-1, 1), log=True)
 ax2.hist(detection_maxsup.ravel(), 512, (-1, 1), log=True)
 
-amp, orien = gradient.gradient(detection)
-nonmaxed = nms.maximum(amp, orien)
+rect_gray1 = img_gray.copy()
+with Timer("NMS"):
+    bb_locs = []
+    h, w, _ = template.shape
+    # Transform to x1, x2, y1, y2 points first
+    for idx, pt in enumerate(locations):
+        x1 = pt[0]
+        x2 = x1 + w
+        y1 = pt[1]
+        y2 = y1 + h
+        bb_locs.append([x1, y1, x2, y2])
+    nonmaxed = nms.non_max_suppression_fast(np.array(bb_locs), 0.2)
+    for pt in nonmaxed:
+        print(f"Found: {pt}")
+        cv2.rectangle(rect_gray1, (pt[0], pt[1]), (pt[0] + w, pt[1] + h), (255, 0, 0), 1)
+
 fig = plt.figure()
 ax = fig.subplots()
-ax.imshow(nonmaxed, vmin=-1, vmax=1)
+ax.imshow(rect_gray1, vmin=-1, vmax=1)
 ax.set_title("Nonmax suppression")
 
 print(f"Min: {dec_min}, Max: {dec_max}")
@@ -87,17 +92,17 @@ if len(locations) == 0:
 else:
     sleep_time = 0.5 / len(locations)
 
-img_gray = cv2.cvtColor(cv2.cvtColor(img.copy(), cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2RGB)
+rect_gray = img_gray.copy()
 h, w, _ = template.shape
 for idx, pt in enumerate(locations):
     print(f"Found: {pt}")
-    cv2.rectangle(img_gray, pt, (pt[0] + w, pt[1] + h), (255, 0, 0), 4)
+    cv2.rectangle(rect_gray, pt, (pt[0] + w, pt[1] + h), (255, 0, 0), 1)
     if len(locations) < 10:
         mouse.move(pt[0] + w / 2, pt[1] + h / 2, duration=sleep_time)
         time.sleep(sleep_time)
 
 fig: plt.Figure = plt.figure()
 ax: plt.Axes = fig.subplots()
-ax.imshow(img_gray)
+ax.imshow(rect_gray)
 ax.set_title("Detections in screenshot")
 plt.show()
