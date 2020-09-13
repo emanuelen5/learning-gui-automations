@@ -65,16 +65,13 @@ print("Checking that synchronization starts")
 app_win.window(title_re="Kommunikation").wait("exists")
 
 print("Waiting for synchronization to finish")
-update_ok = None
 start_time = time.time()
 while True:
     if app_win["Serieport ej tillgänglig."].exists():
-        update_ok = False
         err("Connect serial port and try again.")
         app.kill()
         sys.exit(-1)
     if app_win["Uppdatering fullständig."].exists():
-        update_ok = True
         break
     if time.time() - start_time > 15:
         err("Timeout...")
