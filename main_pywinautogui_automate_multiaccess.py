@@ -18,9 +18,6 @@ def is_multiaccess_running():
 print("Checking if MultiAccess is running...", end="")
 if is_multiaccess_running():
     app = Application(backend="uia").connect(path="C:\\Program Files (x86)\\MultiAccess\\MultiAccess.exe")
-    app.kill()
-
-if False:
     print(" ERROR!\n")
     print("Please exit MultiAccess and try again")
     sys.exit(-1)
