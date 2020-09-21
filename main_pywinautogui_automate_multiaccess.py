@@ -67,21 +67,26 @@ app_win.window(title_re="Kommunikation").wait("exists")
 print("Waiting for synchronization to finish")
 start_time = time.time()
 while True:
-    if app_win["Serieport ej tillgänglig."].exists():
+    if time.time() - start_time > 15:
+        err("Timeout!")
+        app.kill()
+        sys.exit(-1)
+    elif app_win["Uppdatering fullständig."].exists():
+        print("Synchronization done.")
+        ok_button = app_win.OK
+        ok_button.draw_outline()
+        ok_button.click()
+        break
+    elif app_win["Inget svar från kommunikationsmodul"].exists():
+        err("Check the serial port configuration and cable.")
+        app.kill()
+        sys.exit(-1)
+    elif app_win["Serieport ej tillgänglig."].exists():
         err("Connect serial port and try again.")
         app.kill()
         sys.exit(-1)
-    if app_win["Uppdatering fullständig."].exists():
-        break
-    if time.time() - start_time > 15:
-        err("Timeout...")
-        app.kill()
-        sys.exit(-1)
 
-print("Synchronization done. Closing.")
-ok_button = app_win.OK
-ok_button.draw_outline()
-ok_button.click()
+print("Closing.")
 app_win.close()
 
 
